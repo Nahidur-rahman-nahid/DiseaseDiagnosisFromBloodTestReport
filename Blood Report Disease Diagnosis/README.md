@@ -97,8 +97,3 @@ Contributions are welcome! To contribute:
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
 
-## Contact
-
-- **Authors**: Rifaque Ahmed and Raif Karani
-- **Email**: [rifaque123@gmail.com](mailto:rifaque123@gmail.com)
-- **GitHub**: [https://github.com/Rifaque](https://github.com/Rifaque)
