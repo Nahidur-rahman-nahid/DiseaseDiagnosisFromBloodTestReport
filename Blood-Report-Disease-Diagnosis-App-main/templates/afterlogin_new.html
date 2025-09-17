@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blood Disease Detection</title>
+    
+    <!-- Importing Google Fonts - Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            background: linear-gradient(135deg, #71b7e6, #9b59b6);
+        }
+
+        .container {
+            max-width: 700px;
+            width: 100%;
+            background-color: #fff;
+            padding: 25px 30px;
+            border-radius: 5px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
+            position: relative;
+        }
+
+        /* Upload Section Styles */
+        .upload-container {
+            border: 2px dashed #71b7e6;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-container:hover {
+            border-color: #9b59b6;
+            background-color: #f8f9fa;
+        }
+
+        .upload-container.dragover {
+            background-color: #e3f2fd;
+            border-color: #2196f3;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #71b7e6;
+            margin-bottom: 10px;
+        }
+
+        .upload-text {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .or-divider {
+            text-align: center;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .or-divider::before,
+        .or-divider::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            width: 45%;
+            height: 1px;
+            background-color: #ddd;
+        }
+
+        .or-divider::before { left: 0; }
+        .or-divider::after { right: 0; }
+
+        .or-text {
+            background-color: #fff;
+            padding: 0 10px;
+            color: #666;
+            display: inline-block;
+            position: relative;
+        }
+
+        /* Processing Overlay */
+        .processing-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .processing-content {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        /* Form Styles */
+        .container .title {
+            font-size: 25px;
+            font-weight: 500;
+            position: relative;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .form-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .input-box {
+            flex: 1 1 calc(50% - 10px);
+            min-width: 200px;
+        }
+
+        .input-box.full-width {
+            flex: 1 1 100%;
+            max-width: 50%;
+        }
+
+        .input-box span.details {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .input-box input {
+            height: 45px;
+            width: 100%;
+            outline: none;
+            font-size: 16px;
+            border-radius: 5px;
+            padding-left: 15px;
+            border: 1px solid #ccc;
+            border-bottom-width: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .button {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .button button {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #71b7e6, #9b59b6);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.2s;
+        }
+
+        .button button:hover {
+            transform: scale(1.02);
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .login-link a {
+            color: #9b59b6;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Processing Overlay -->
+    <div id="processing-overlay" class="processing-overlay">
+        <div class="processing-content">
+            <div class="upload-icon">⚙️</div>
+            <p>Processing your CBC report...</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="title">Blood Report Analysis</div>
+        <div class="content">
+            <!-- Upload Section -->
+            <div class="upload-container" id="drop-zone" onclick="document.getElementById('file-input').click();">
+                <div class="upload-icon">📄</div>
+                <div class="upload-text">Drag & drop your CBC report image here</div>
+                <div class="upload-text">or click to browse</div>
+                <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+            </div>
+
+            <div class="or-divider">
+                <span class="or-text">OR</span>
+            </div>
+
+            <!-- Manual Input Form -->
+            <form method="POST" onsubmit="return validateForm();" id="myForm">
+                <div class="form-grid">
+                    <div class="input-box">
+                        <span class="details">WBC (White Blood Cells)</span>
+                        <input type="text" id="WBC" name="WBC" placeholder="Enter WBC Count" required>
+                    </div>
+                    <div class="input-box">
+                        <span class="details">RBC (Red Blood Cells)</span>
+                        <input type="text" id="RBC" name="RBC" placeholder="Enter RBC Count" required>
+                    </div>
+                    <div class="input-box">
+                        <span class="details">Hemoglobin (HGB)</span>
+                        <input type="text" id="HGB" name="HGB" placeholder="Enter Hemoglobin" required>
+                    </div>
+                    <div class="input-box">
+                        <span class="details">Platelets (PLT)</span>
+                        <input type="text" id="PLT" name="PLT" placeholder="Enter Platelets Count" required>
+                    </div>
+                    <div class="input-box">
+                        <span class="details">Neutrophils</span>
+                        <input type="text" id="NEUT" name="NEUT" placeholder="Enter Neutrophils Count" required>
+                    </div>
+                    <div class="input-box">
+                        <span class="details">Lymphocytes</span>
+                        <input type="text" id="LYMPH" name="LYMPH" placeholder="Enter Lymphocytes Count" required>
+                    </div>
+                    <div class="input-box">
+                        <span class="details">Monocytes</span>
+                        <input type="text" id="MONO" name="MONO" placeholder="Enter Monocytes Count" required>
+                    </div>
+                    <div class="input-box">
+                        <span class="details">Eosinophils</span>
+                        <input type="text" id="EO" name="EO" placeholder="Enter Eosinophils Count" required>
+                    </div>
+                </div>
+                <div class="input-box full-width">
+                    <span class="details">Basophils</span>
+                    <input type="text" id="BASO" name="BASO" placeholder="Enter Basophils Count" required>
+                </div>
+                <div class="button">
+                    <button type="submit">Submit</button>
+                </div>
+                <div class="button">
+                    <button type="button" onclick="saveData()">Save Data</button>
+                </div>
+                
+                <div class="login-link">
+                    <a href="/view_history">History</a> | <a href="/logout">Logout</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // File upload handling
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                uploadFile(file);
+            }
+        }
+
+        // Handle drag and drop
+        const dropZone = document.getElementById('drop-zone');
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                uploadFile(file);
+            }
+        });
+
+        // Upload file to server
+        function uploadFile(file) {
+            showProcessing();
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/upload_cbc', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideProcessing();
+                if (data.success) {
+                    // Fill the form fields with extracted values
+                    Object.keys(data.values).forEach(field => {
+                        const element = document.getElementById(field);
+                        if (element) {
+                            element.value = data.values[field];
+                        }
+                    });
+                    alert('CBC values extracted successfully!');
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                hideProcessing();
+                console.error('Error:', error);
+                alert('Error uploading file. Please try again.');
+            });
+        }
+
+        // Save form data
+        function saveData() {
+            var formData = new FormData(document.getElementById("myForm"));
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/save_data");
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    alert("Data saved successfully!");
+                } else {
+                    alert("Failed to save data.");
+                }
+            };
+            xhr.send(formData);
+        }
+
+        // Validate form fields
+        function validateForm() {
+            const fields = ['WBC', 'RBC', 'HGB', 'PLT', 'NEUT', 'LYMPH', 'MONO', 'EO', 'BASO'];
+            for (let field of fields) {
+                const value = document.getElementById(field).value;
+                if (isNaN(value) || value.trim() === '') {
+                    alert(`Please enter a valid number for ${field}.`);
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // Show/hide processing overlay
+        function showProcessing() {
+            document.getElementById('processing-overlay').style.display = 'flex';
+        }
+
+        function hideProcessing() {
+            document.getElementById('processing-overlay').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
