@@ -24,33 +24,48 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Configure Gemini API and model settings
 GEMINI_API_KEY = "AIzaSyDiGawJodjsF4xzO7TpXPPmxqTqmyq2VVg"
-MODEL_NAME = "gemini-1.5-flash"  # Use flash model consistently
-GENERATION_CONFIG = {
-    "temperature": 0.1,
-    "top_p": 0.8,
-    "max_output_tokens": 1024,
-}
 
-# Configure API
-genai.configure(api_key=GEMINI_API_KEY)
-
-# Initialize model
-try:
-    print(f"Initializing Gemini model: {MODEL_NAME}")
-    model = genai.GenerativeModel(MODEL_NAME)
+# Model configuration
+class GeminiConfig:
+    MODEL_NAME = "models/gemini-1.5-flash"  # Using flash model for better quota management
+    GENERATION_CONFIG = {
+        "temperature": 0.1,
+        "top_p": 0.8,
+        "max_output_tokens": 1024,
+    }
     
-    # Test the model with a simple prompt to verify it's working
-    test_response = model.generate_content(
-        "Respond with just the word 'OK' if you're working.",
-        generation_config=GENERATION_CONFIG
-    )
-    if not test_response or "OK" not in test_response.text:
-        raise Exception("Model response validation failed")
-        
-    print(f"Gemini model configured and tested successfully: {MODEL_NAME}")
-except Exception as e:
-    print(f"Error configuring model: {str(e)}")
-    model = None
+    @classmethod
+    def initialize_model(cls):
+        try:
+            # Configure API
+            genai.configure(api_key=GEMINI_API_KEY)
+            
+            # List available models
+            print("Available models:")
+            for m in genai.list_models():
+                print(f"- {m.name}")
+            
+            # Initialize model
+            print(f"\nInitializing Gemini model: {cls.MODEL_NAME}")
+            model = genai.GenerativeModel(cls.MODEL_NAME)
+            
+            # Test the model
+            test_response = model.generate_content(
+                "Respond with just the word 'OK' if you're working.",
+                generation_config=cls.GENERATION_CONFIG
+            )
+            if not test_response or "OK" not in test_response.text:
+                raise Exception("Model response validation failed")
+            
+            print(f"Gemini model configured and tested successfully: {cls.MODEL_NAME}")
+            return model
+            
+        except Exception as e:
+            print(f"Error configuring model: {str(e)}")
+            return None
+
+# Initialize the model
+model = GeminiConfig.initialize_model()
 
 # Helper functions for file upload
 def allowed_file(filename):
@@ -605,16 +620,15 @@ def gemini_analysis():
         print("\nAttempting to generate content:")
         print("1. Model status:", "Initialized" if model else "Not initialized")
         print("2. API Key status:", "Set" if GEMINI_API_KEY else "Not set")
-        
-        # Use the global configuration
-        response = model.generate_content(
-            prompt,
-            generation_config=GENERATION_CONFIG
-        )
-        
         print("3. Response type:", type(response))
         print("4. Response attributes:", dir(response))
         
+        
+            # Use the GeminiConfig configuration
+        response = model.generate_content(
+            prompt,
+            generation_config=GeminiConfig.GENERATION_CONFIG
+        )       
         # Try different ways to get the response
         if hasattr(response, 'text'):
             print("5. Using response.text")
@@ -683,10 +697,10 @@ def upload_cbc_image():
           "NEUT": "...", "LYMPH": "...", "MONO": "...", "EO": "...", "BASO": "..." }
         """
 
-        # Send request to Gemini using global configuration
+        # Send request to Gemini using GeminiConfig configuration
         response = model.generate_content(
             [prompt, cbc_image],
-            generation_config=GENERATION_CONFIG
+            generation_config=GeminiConfig.GENERATION_CONFIG
         )
 
         # Extract response text and parse JSON
